@@ -7,8 +7,9 @@
 class Bunny : public Test
 {
 public:
+	b2Vec2 beforePosition;
 
-	Bunny() 
+	Bunny()
 	{
 		forward = 0.0;
 		backward = 0.0;
@@ -17,7 +18,7 @@ public:
 			b2PolygonShape rbody;
 			b2Vec2 vertices[8];
 			vertices[0].Set(-2.0f, 1.0f);
-			vertices[1].Set(-1.5f, 0.3f);  
+			vertices[1].Set(-1.5f, 0.3f);
 			vertices[2].Set(-1.0f, 0.0f); //back
 			vertices[3].Set(1.0f, 0.0f); //front
 			vertices[4].Set(1.5f, 0.3f);
@@ -29,6 +30,7 @@ public:
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 			bd.position.Set(0.0f, 1.0f);
+			beforePosition = { 0.0f, 1.0f };
 
 			b2FixtureDef fd;
 			fd.shape = &rbody;
@@ -37,6 +39,7 @@ public:
 
 			rabbit = m_world->CreateBody(&bd);
 			rabbit->CreateFixture(&rbody, 1.0f);
+
 		}
 		//¹ÙÀ§ ^^
 		{
@@ -70,12 +73,12 @@ public:
 
 
 			b2EdgeShape shape;
-			
+
 			b2FixtureDef fd;
 			fd.shape = &shape;
 			fd.friction = 0.9f;
 			fd.restitution = 0.1f;
-			
+
 			shape.Set(b2Vec2(-20.0f, 0.0f), b2Vec2(20.0f, 0.0f));
 			ground->CreateFixture(&fd);
 
@@ -133,6 +136,7 @@ public:
 		case GLFW_KEY_W:
 			if (!jumpAvail)
 			{
+				beforePosition = rabbit->GetPosition();
 				jumpstep = 6;
 				jforce = rabbit->GetMass() * forward / (1 / 60.0);
 				bforce = rabbit->GetMass()*backward / (1 / 60.0);
@@ -167,9 +171,9 @@ public:
 		//show some text in the main screen
 		g_debugDraw.DrawString(5, m_textLine, "Bunny vs Rabbit");
 		m_textLine += 15;
-		g_debugDraw.DrawString(5, m_textLine, "Angle : %.3f  Angular velocity: %.3f",angle*RADTODEG,angleVelocity*RADTODEG);
+		g_debugDraw.DrawString(5, m_textLine, "Angle : %.3f  Angular velocity: %.3f", angle*RADTODEG, angleVelocity*RADTODEG);
 		m_textLine += 15;
-		g_debugDraw.DrawString(5, m_textLine, "speed x : %.3f, y : %.3f",speed.x,speed.y);
+		g_debugDraw.DrawString(5, m_textLine, "speed x : %.3f, y : %.3f", speed.x, speed.y);
 		m_textLine += 15;
 		g_debugDraw.DrawString(5, m_textLine, "front : %.3f, back : %.3f", forward, backward);
 		m_textLine += 15;
@@ -182,33 +186,29 @@ public:
 			m_textLine += 15;
 		}
 
-		if ( jumpstep>0)
+		if (jumpstep>0)
 		{
 			rabbit->ApplyForce(b2Vec2(0, bforce), rabbit->GetWorldPoint(b2Vec2(10.0f, 1.0f)), true);
 			rabbit->ApplyForce(b2Vec2(0, jforce), rabbit->GetWorldPoint(b2Vec2(-10.0f, 1.0f)), true);
-		
+
 			rabbit->ApplyForce(b2Vec2(jforce, 0), rabbit->GetWorldCenter(), true);
 			jumpstep--;
 		}
-		
+
 		//check angle
-		if (!jumpAvail)
+		if (!jumpAvail && rabbit->GetAngularVelocity() == 0)
 		{
-			int a = angle*RADTODEG;
+			int a = angle * RADTODEG;
 			a %= 360;
-			g_debugDraw.DrawString(5, m_textLine, "angle %d",a);
+			if (a < 0) a += 360;
+			g_debugDraw.DrawString(5, m_textLine, "angle %d", a);
+
 			
-			/*
-			if (100 > a && a>-150)
+			if (100 < a && a < 280)
 			{
-				
+				rabbit->SetTransform(beforePosition, 0.0);
 			}
-			else
-			{
-				b2Vec2 pos = rabbit->GetPosition();
-				pos.y += 5.0f;
-				rabbit->SetTransform(pos, 0.0);
-			}*/
+			
 		}
 	}
 
